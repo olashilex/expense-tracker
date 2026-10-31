@@ -48,6 +48,12 @@ const Subtitle = styled.span`
   color: #7a8980;
   font-size: 13px;
 `;
+const Greeting = styled.h3`
+font-size : 18px;
+font-weight: 550;
+
+
+`;
 
 function App() {
   return (
@@ -57,6 +63,7 @@ function App() {
           <BrandMark aria-hidden="true">$</BrandMark>
           <BrandCopy>
             <Title>Expense tracker</Title>
+            <Greeting>Welcome</Greeting>
             <Subtitle>Your money, in balance.</Subtitle>
           </BrandCopy>
         </Header>

@@ -260,8 +260,12 @@ const formatCurrency = (amount) =>
     currency: "USD",
   }).format(amount);
 
-const AddTransactionForm = ({ onSubmit, onCancel }) => {
-  const [type, setType] = useState("EXPENSE");
+const AddTransactionForm = ({
+  onSubmit,
+  onCancel,
+  transaction,
+}) => {
+  const [type, setType] = useState(transaction?.type ?? "EXPENSE");
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -277,7 +281,7 @@ const AddTransactionForm = ({ onSubmit, onCancel }) => {
 
   return (
     <FormCard onSubmit={handleSubmit}>
-      <FormHeading>New transaction</FormHeading>
+      <FormHeading>{transaction ? "Edit transaction" : "New transaction"}</FormHeading>
       <TypeToggle role="radiogroup" aria-label="Transaction type">
         <TypeOption $selected={type === "EXPENSE"} $income={false}>
           <input
@@ -308,6 +312,7 @@ const AddTransactionForm = ({ onSubmit, onCancel }) => {
           min="0.01"
           step="0.01"
           placeholder="0.00"
+          defaultValue={transaction?.amount ?? ""}
           required
         />
       </Field>
@@ -318,12 +323,13 @@ const AddTransactionForm = ({ onSubmit, onCancel }) => {
           type="text"
           placeholder="What was it for?"
           maxLength="80"
+          defaultValue={transaction?.description ?? ""}
           required
         />
       </Field>
       <Field>
         Category
-        <Select name="category" defaultValue="Other">
+        <Select name="category" defaultValue={transaction?.category ?? "Other"}>
           <option>Other</option>
           <option>Food &amp; drink</option>
           <option>Transport</option>
@@ -335,23 +341,42 @@ const AddTransactionForm = ({ onSubmit, onCancel }) => {
       </Field>
       <Field>
         Date
-        <Input name="date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required />
+        <Input
+          name="date"
+          type="date"
+          defaultValue={transaction?.date ?? new Date().toISOString().slice(0, 10)}
+          required
+        />
       </Field>
       <FormActions>
         <CancelButton type="button" onClick={onCancel}>
           Cancel
         </CancelButton>
-        <SubmitButton type="submit">Add transaction</SubmitButton>
+        <SubmitButton type="submit">
+          {transaction ? "Save changes" : "Add transaction"}
+        </SubmitButton>
       </FormActions>
     </FormCard>
   );
 };
 
-const OverviewComponent = ({ balance, income, expenses, onAddTransaction }) => {
+const OverviewComponent = ({
+  balance,
+  income,
+  expenses,
+  onAddTransaction,
+  editingTransaction,
+  onUpdateTransaction,
+  onCancelEdit,
+}) => {
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   const submitTransaction = (transaction) => {
-    onAddTransaction(transaction);
+    if (editingTransaction) {
+      onUpdateTransaction(transaction);
+    } else {
+      onAddTransaction(transaction);
+    }
     setIsFormVisible(false);
   };
 
@@ -374,10 +399,15 @@ const OverviewComponent = ({ balance, income, expenses, onAddTransaction }) => {
           </SummaryItem>
         </Summary>
       </BalanceCard>
-      {isFormVisible ? (
+      {editingTransaction || isFormVisible ? (
         <AddTransactionForm
+          key={editingTransaction?.id ?? "new"}
+          transaction={editingTransaction}
           onSubmit={submitTransaction}
-          onCancel={() => setIsFormVisible(false)}
+          onCancel={() => {
+            setIsFormVisible(false);
+            onCancelEdit();
+          }}
         />
       ) : (
         <AddButton type="button" onClick={() => setIsFormVisible(true)}>

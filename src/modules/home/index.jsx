@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import OverviewComponent from "./OverviewComponent";
 import TransactionComponent from "./TransactionComponent";
@@ -14,10 +14,32 @@ const Dashboard = styled.div`
   }
 `;
 
-const transactionsInitialState = [];
+const TRANSACTIONS_STORAGE_KEY = "expense-tracker-transactions";
+
+const loadTransactions = () => {
+  try {
+    const savedTransactions = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
+    if (!savedTransactions) return [];
+
+    const parsedTransactions = JSON.parse(savedTransactions);
+    return Array.isArray(parsedTransactions) ? parsedTransactions : [];
+  } catch (error) {
+    console.error("Could not load saved transactions from local storage.", error);
+    return [];
+  }
+};
 
 const HomeComponent = () => {
-  const [transactions, setTransactions] = useState(transactionsInitialState);
+  const [transactions, setTransactions] = useState(loadTransactions);
+  const [editingTransaction, setEditingTransaction] = useState(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(transactions));
+    } catch (error) {
+      console.error("Could not save transactions to local storage.", error);
+    }
+  }, [transactions]);
 
   const balance = transactions.reduce(
     (total, transaction) =>
@@ -42,6 +64,23 @@ const HomeComponent = () => {
     ]);
   };
 
+  const updateTransaction = (updatedTransaction) => {
+    setTransactions((currentTransactions) =>
+      currentTransactions.map((transaction) =>
+        transaction.id === editingTransaction.id
+          ? { ...transaction, ...updatedTransaction }
+          : transaction,
+      ),
+    );
+    setEditingTransaction(null);
+  };
+
+  const deleteTransaction = (transactionId) => {
+    setTransactions((currentTransactions) =>
+      currentTransactions.filter((transaction) => transaction.id !== transactionId),
+    );
+  };
+
   return (
     <Dashboard>
       <OverviewComponent
@@ -49,8 +88,15 @@ const HomeComponent = () => {
         income={income}
         expenses={expenses}
         onAddTransaction={addTransaction}
+        editingTransaction={editingTransaction}
+        onUpdateTransaction={updateTransaction}
+        onCancelEdit={() => setEditingTransaction(null)}
       />
-      <TransactionComponent transactions={transactions} />
+      <TransactionComponent
+        transactions={transactions}
+        onEdit={setEditingTransaction}
+        onDelete={deleteTransaction}
+      />
     </Dashboard>
   );
 };

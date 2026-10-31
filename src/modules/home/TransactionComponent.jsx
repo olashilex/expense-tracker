@@ -111,6 +111,33 @@ const Amount = styled.span`
   font-variant-numeric: tabular-nums;
 `;
 
+const TransactionActions = styled.div`
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
+`;
+
+const ActionButton = styled.button`
+  padding: 6px 8px;
+  border: 1px solid #e1e9e3;
+  border-radius: 8px;
+  background: #fff;
+  color: #53645a;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+
+  &:hover {
+    background: #f3f7f4;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #64a77d;
+    outline-offset: 2px;
+  }
+`;
+
 const EmptyState = styled.div`
   display: flex;
   min-height: 214px;
@@ -169,7 +196,7 @@ const formatDate = (date) =>
     timeZone: "UTC",
   }).format(new Date(`${date}T00:00:00Z`));
 
-const TransactionComponent = ({ transactions }) => (
+const TransactionComponent = ({ transactions, onEdit, onDelete }) => (
   <Panel aria-label="Recent transactions">
     <PanelHeader>
       <HeadingGroup>
@@ -197,6 +224,22 @@ const TransactionComponent = ({ transactions }) => (
                 {isIncome ? "+" : "−"}
                 {formatCurrency(transaction.amount)}
               </Amount>
+              <TransactionActions>
+                <ActionButton
+                  type="button"
+                  aria-label={`Edit ${transaction.description}`}
+                  onClick={() => onEdit(transaction)}
+                >
+                  Edit
+                </ActionButton>
+                <ActionButton
+                  type="button"
+                  aria-label={`Delete ${transaction.description}`}
+                  onClick={() => onDelete(transaction.id)}
+                >
+                  Delete
+                </ActionButton>
+              </TransactionActions>
             </TransactionRow>
           );
         })}
